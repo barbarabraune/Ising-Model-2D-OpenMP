@@ -4,12 +4,12 @@
 #include <math.h>
 #include <time.h>
 
-//definição de variaveis globais
+//definiÃ§Ã£o de variaveis globais
 #define L 500
 #define IT 2000
 #define EQ 100 // equilibra o sistema.
 
-//inicializa o array 2D com uma configuração inicial de A
+//inicializa o array 2D com uma configuraÃ§Ã£o inicial de A
 int **Inicializacao(int **A) 
 {
   int i, j, x;
@@ -31,7 +31,7 @@ int **Inicializacao(int **A)
 	return A;
 }
 
-//calcula as condições de contorno
+//calcula as condiÃ§Ãµes de contorno
 int **Contorno(int **A, int **B)
 {
   int i, j;
@@ -55,7 +55,7 @@ int **Contorno(int **A, int **B)
   return B;
 }
 
-//calcula a energia total da configuração de A
+//calcula a energia total da configuraÃ§Ã£o de A
 double Energia(int **B) 
 {
   double en = 0, E = 0;
@@ -73,7 +73,7 @@ double Energia(int **B)
   return E/2;
 }
 
-//calcula a magnetização por spins
+//calcula a magnetizaÃ§Ã£o por spins
 double Magnetizacao(int **B)
 {
   double total = 0;
@@ -104,28 +104,28 @@ void monteCarlo(int **B, double T, int chunk, int num_threads)
   	{
   	  for(j=1; j<L+1; j++)
   	  {
-  	    //flipar um spin aleatório
+  	    //flipar um spin aleatÃ³rio
   	    a = 1+rand() % L;
   	    b = 1+rand() % L;
   	    //B[a][b] *= -1;
 
-  	    //diferença de energia inicial e final
+  	    //diferenÃ§a de energia inicial e final
   	    dE = 2*B[a][b]*(B[a-1][b]+B[a][b+1]+B[a+1][b]+B[a][b-1]);
 
-  	    //se delatE<=0, muda orientação
+  	    //se delatE<=0, muda orientaÃ§Ã£o
   	    if(dE<=0)
   	    {
   	      B[a][b] *= -1;
   	    }
-  	    //senão, calcula prob=e^(-deltaE/T)
+  	    //senÃ£o, calcula prob=e^(-deltaE/T)
   	    else
   	    {
   	      prob = exp(-dE/T);
-  	      //gera um número aleatório entre 0 e 1
+  	      //gera um nÃºmero aleatÃ³rio entre 0 e 1
   	      //random = -1+rand() % 3;
   	      random = drand48();
 
-  	      //se o número aleatório for menor ou igual a probabilidade, muda a orientação do spin
+  	      //se o nÃºmero aleatÃ³rio for menor ou igual a probabilidade, muda a orientaÃ§Ã£o do spin
   	      if(prob > random)
   	      {
   	        B[a][b]*=-1;
@@ -150,14 +150,14 @@ int main(int argc, char *argv[])
 
   arq1=fopen("grafico.dat", "wt");
   
-  //aloca memória do array 2D
+  //aloca memÃ³ria do array 2D
   A = malloc(L*sizeof(int*));
   for(i=0;i<L;i++) 
   {
     A[i] = (int*)malloc(L*sizeof(int));
   }
 
-  //aloca memória do array 2D cópia
+  //aloca memÃ³ria do array 2D cÃ³pia
   B = malloc((L+2)*sizeof(int*));
   for(i=0;i<(L+2);i++) 
   {
@@ -167,14 +167,14 @@ int main(int argc, char *argv[])
   //chama para inicializar o array 2D
   A = Inicializacao(A);
 
-  //aplica as condições de contorno
+  //aplica as condiÃ§Ãµes de contorno
   B = Contorno(A, B);
 
-  //calcula a magnetização inicial por spins
+  //calcula a magnetizaÃ§Ã£o inicial por spins
   mag = Magnetizacao(B);
 
   /*//imprime o array 2D para testar
-  printf("\nConfiguração inicial dos spins:\n");
+  printf("\nConfiguraÃ§Ã£o inicial dos spins:\n");
   for(int i=1; i<L+1; i++)
   {
     for(int j=1; j<L+1; j++)
@@ -184,14 +184,14 @@ int main(int argc, char *argv[])
 		printf ("\n");
   }*/
 
-  //imprime a magnetização
-  printf("\nMagnetização inicial: %.2lf\n", mag);
+  //imprime a magnetizaÃ§Ã£o
+  printf("\nMagnetizaÃ§Ã£o inicial: %.2lf\n", mag);
 
   //calcula a energia inicial 
   Ei = Energia(B);
   printf("\nEnergia inicial = %.2lf\n", Ei);
   
-  /*printf("\nConfiguração depois da energia inicial:\n");
+  /*printf("\nConfiguraÃ§Ã£o depois da energia inicial:\n");
   for(int i=1; i<L+1; i++)
   {
     for(int j=1; j<L+1; j++)
@@ -217,18 +217,18 @@ int main(int argc, char *argv[])
     for ( i = 0 ; i < IT ; i++ )
     { 
       monteCarlo(B, T, chunk, num_threads);
-      //soma a magnetização
+      //soma a magnetizaÃ§Ã£o
       mag += Magnetizacao(B);
       //calcula a energia do novo estado
       Ef += Energia(B);
-      //printf("\nMagnetização: %.2lf\n", mag);
+      //printf("\nMagnetizaÃ§Ã£o: %.2lf\n", mag);
     }
     
     fprintf (arq1, "%f %f %f\n", T, mag/IT, Ef/IT);
   }
 
   /*//imprime o array 2D
-  printf("\nConfiguração final dos spins:\n");
+  printf("\nConfiguraÃ§Ã£o final dos spins:\n");
   for(int i=1; i<L+1; i++)
   {
     for(int j=1; j<L+1; j++)
@@ -239,8 +239,8 @@ int main(int argc, char *argv[])
 		printf ("\n");
   }*/
   
-  //imprime a magnetização final por spins
-  printf("\nMagnetização final: %.2lf\n", mag);
+  //imprime a magnetizaÃ§Ã£o final por spins
+  printf("\nMagnetizaÃ§Ã£o final: %.2lf\n", mag);
 
   //energia final
   printf("\nEnergia final = %.2lf\n", Ef);
