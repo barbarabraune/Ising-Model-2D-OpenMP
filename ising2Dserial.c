@@ -1,0 +1,190 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <time.h>
+
+//definicao de variaveis globais
+#define L 800 //tamanho da matriz
+#define IT 2000 //numero de iteracoes
+#define EQ 100 // equilibra o sistema
+
+//inicializa o array 2D com uma configuracao inicial de A
+int **Inicializacao(int **A) 
+{
+  int i, j, x;
+  srand(time(NULL) );
+  for(i=0; i<L; i++)
+  {
+		for(j=0; j<L; j++)
+    {
+      x = -1+rand() % 3;
+
+		if(x == 0)
+      {
+		A[i][j] = -1;
+      }
+      else 
+		A[i][j] = 1;
+    }
+  }
+	return A;
+}
+
+//calcula as condicoes de contorno
+int **Contorno(int **A, int **B)
+{
+  int i, j;
+
+  for(j=1; j<=L; j++)
+  {
+    B[0][j] = A[L-1][j-1];
+    B[L+1][j] = A[0][j-1];
+    B[j][0] = A[j-1][L-1];
+    B[j][L+1] = A[L-1][0];
+  }
+  
+  for(i=1; i<=L; i++)
+  {
+    for(j=1; j<=L; j++)
+    {
+      B[i][j] = A[i-1][j-1];
+    }
+  }
+
+  return B;
+}
+
+//calcula a energia total da configuracao da matriz
+double Energia(int **B) 
+{
+  double en = 0, E = 0;
+  int i, j;
+
+  for(i=1; i<L+1; i++)
+  {
+		for(j=1; j<L+1; j++)
+		{	
+			en = B[i][j]*(B[i-1][j]+B[i][j+1]+B[i+1][j]+B[i][j-1]);
+			E += -en;
+		}
+  }
+	E = E/(L*L);		
+  return E/2;
+}
+
+//calcula a magnetizacao por spins
+double Magnetizacao(int **B)
+{
+  double total = 0;
+  int i, j, N;
+
+  N = L*L;
+
+	for(i=1; i<L+1; i++)
+   {
+		for(j=1; j<L+1; j++)
+        {
+		    total += B[i][j];
+        }
+   }
+  return total/N;
+}
+
+void monteCarlo(int **B, double T)
+{
+  int i, j, a, b;
+  double dE, prob, random;
+
+  for(int i=1; i<L+1; i++)
+  {
+    for(int j=1; j<L+1; j++)
+    {
+      //flipar um spin aleatorio
+      a = 1+rand() % L;
+      b = 1+rand() % L;
+
+      //diferenca de energia inicial e final
+      dE = 2*B[a][b]*(B[a-1][b]+B[a][b+1]+B[a+1][b]+B[a][b-1]);
+
+      //se delatE<=0, muda orientacao
+      if(dE<=0)
+      {
+        B[a][b] *= -1;
+      }
+      //senao, calcula prob=e^(-deltaE/T)
+      else
+      {
+        prob = exp(-dE/T);
+        //gera um numero aleatorio entre 0 e 1
+        random = drand48();
+
+        //se o numero aleatorio for menor que a probabilidade, muda a orientacao do spin
+        if(prob > random)
+        {
+          B[a][b]*=-1;
+        }
+      }
+    }
+  }
+}
+
+int main(void)
+{
+	FILE *arq1;
+  int i, j;
+  int **A, **B, random, a, b, contagem=0;
+  double prob, dE, Ei, Ef, mag, somaM=0, somaE=0, T;
+
+  arq1=fopen("grafico.dat", "wt");
+  
+  //aloca memoria do array 2D
+  A = malloc(L*sizeof(int*));
+  for(i=0;i<L;i++) 
+  {
+    A[i] = (int*)malloc(L*sizeof(int));
+  }
+
+  //aloca memoria do array 2D copia
+  B = malloc((L+2)*sizeof(int*));
+  for(i=0;i<(L+2);i++) 
+  {
+    B[i] = (int*)malloc((L+2)*sizeof(int));
+  }
+
+  //chama para inicializar o array 2D
+  A = Inicializacao(A);
+
+  //aplica as condicoes de contorno
+  B = Contorno(A, B);
+
+  //calcula a magnetizacao inicial por spins
+  mag = Magnetizacao(B);
+
+  srand(time(NULL) );
+  for(T=0; T<4; T+=0.5)
+  {
+    A = Inicializacao(A);
+    B = Contorno(A, B);
+    
+    for ( i = 0 ; i < EQ ; i++ )
+    { // equilibra o sistema
+      monteCarlo(B, T);
+    }
+
+    mag = 0;
+    Ef = 0;
+    for ( i = 0 ; i < IT ; i++ )
+    { 
+      monteCarlo(B, T);
+      //soma a magnetizacao
+      mag += Magnetizacao(B);
+      //calcula a energia do novo estado
+      Ef += Energia(B);
+    }
+    
+    fprintf (arq1, "%f %f %f\n", T, mag/IT, Ef/IT);
+  }
+
+	return 0;
+}
